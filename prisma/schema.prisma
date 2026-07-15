@@ -1,13 +1,17 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Roster {
+  id        String   @id @default(uuid())
+  employee  String
+  shifts    String[] // Stores the morning/evening/off states as an array
+  hours     Json     // Stores the exact custom hours for each day
+  createdAt DateTime @default(now())
 }
