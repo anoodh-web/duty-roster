@@ -1,65 +1,404 @@
-import Image from "next/image";
+// app/page.tsx
+"use client";
+import React, { useState, useRef } from 'react';
+import html2canvas from 'html2canvas-pro';
 
-export default function Home() {
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+export default function Dashboard() {
+  // Theme & Navigation States
+  const [darkMode, setDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'weekly' | 'daily'>('weekly');
+  const [selectedDay, setSelectedDay] = useState<string>('Monday');
+
+  // Main Roster State (Includes a daily details array for shift hours)
+  const [roster, setRoster] = useState([
+    { 
+      id: 1, 
+      employee: "Alice Smith", 
+      shifts: ["Morning", "Morning", "Off", "Evening", "Evening", "Off", "Off"],
+      hours: {
+        Monday: "09:00 to 18:00",
+        Tuesday: "09:00 to 18:00",
+        Wednesday: "Off",
+        Thursday: "14:00 to 23:00",
+        Friday: "14:00 to 23:00",
+        Saturday: "Off",
+        Sunday: "Off"
+      }
+    },
+    { 
+      id: 2, 
+      employee: "Bob Jones", 
+      shifts: ["Evening", "Evening", "Morning", "Off", "Off", "Morning", "Morning"],
+      hours: {
+        Monday: "14:00 to 23:00",
+        Tuesday: "14:00 to 23:00",
+        Wednesday: "09:00 to 18:00",
+        Thursday: "Off",
+        Friday: "Off",
+        Saturday: "09:00 to 18:00",
+        Sunday: "09:00 to 18:00"
+      }
+    }
+  ]);
+
+  // Modal & Form States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  
+  // Weekly structure form states
+  const [selectedShifts, setSelectedShifts] = useState(['Off', 'Off', 'Off', 'Off', 'Off', 'Off', 'Off']);
+  
+  // Custom Hours form states
+  const [startTimes, setStartTimes] = useState<string[]>(Array(7).fill('09:00'));
+  const [endTimes, setEndTimes] = useState<string[]>(Array(7).fill('18:00'));
+
+  // Ref to target the current visual card for sharing
+  const printRef = useRef<HTMLDivElement>(null);
+
+  // Function to delete an employee
+  const handleDeleteEmployee = (id: number) => {
+    setRoster(roster.filter(item => item.id !== id));
+  };
+
+  // Function to submit a new employee with customized times
+  const handleAddEmployee = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmployeeName.trim()) return;
+
+    const dailyHoursObj: Record<string, string> = {};
+    daysOfWeek.forEach((day, index) => {
+      if (selectedShifts[index] === 'Off') {
+        dailyHoursObj[day] = 'Off';
+      } else {
+        dailyHoursObj[day] = `${startTimes[index]} to ${endTimes[index]}`;
+      }
+    });
+
+    setRoster([...roster, { 
+      id: Date.now(), 
+      employee: newEmployeeName, 
+      shifts: selectedShifts,
+      hours: dailyHoursObj as any
+    }]);
+
+    // Reset Form
+    setNewEmployeeName('');
+    setSelectedShifts(Array(7).fill('Off'));
+    setStartTimes(Array(7).fill('09:00'));
+    setEndTimes(Array(7).fill('18:00'));
+    setIsModalOpen(false);
+  };
+
+  const handleShiftTypeChange = (dayIndex: number, val: string) => {
+    const updated = [...selectedShifts];
+    updated[dayIndex] = val;
+    setSelectedShifts(updated);
+  };
+
+  const handleTimeChange = (dayIndex: number, type: 'start' | 'end', val: string) => {
+    if (type === 'start') {
+      const updated = [...startTimes];
+      updated[dayIndex] = val;
+      setStartTimes(updated);
+    } else {
+      const updated = [...endTimes];
+      updated[dayIndex] = val;
+      setEndTimes(updated);
+    }
+  };
+
+  // Function to download whatever tab is active as an image
+  const handleDownloadImage = async () => {
+    if (printRef.current) {
+      const canvas = await html2canvas(printRef.current, {
+        backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+        scale: 2 
+      });
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `${activeTab}-roster.png`;
+      link.click();
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className={`min-h-screen p-8 font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+      
+      {/* Top Header / Action Bar */}
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6 border-slate-200 dark:border-slate-700">
+        <div>
+          <h1 className={`text-3xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            🏢 Workplace Hub
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            Operational Management & Duty Schedule
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Global Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={() => setDarkMode(!darkMode)}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold border transition cursor-pointer ${
+              darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
+
+          <button 
+            onClick={handleDownloadImage}
+            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 shadow-sm transition cursor-pointer"
           >
-            Documentation
-          </a>
+            📥 Download Active View
+          </button>
+
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-sm transition cursor-pointer"
+          >
+            + Add Employee
+          </button>
         </div>
-      </main>
+      </header>
+
+      {/* Tab Switcher */}
+      <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <button 
+          onClick={() => setActiveTab('weekly')}
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'weekly' 
+              ? 'border-b-2 border-blue-500 text-blue-500 font-extrabold' 
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+          }`}
+        >
+          📅 Weekly Overview
+        </button>
+        <button 
+          onClick={() => setActiveTab('daily')}
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'daily' 
+              ? 'border-b-2 border-blue-500 text-blue-500 font-extrabold' 
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+          }`}
+        >
+          🕒 Daily Roster & Hours
+        </button>
+      </div>
+
+      {/* VIEW 1: WEEKLY ROSTER OVERVIEW */}
+      {activeTab === 'weekly' && (
+        <div ref={printRef} className={`p-4 rounded-xl border shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <h2 className={`text-lg font-bold mb-4 px-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Weekly Duty Schedule Overview</h2>
+          <div className="overflow-x-auto rounded-lg">
+            <table className="min-w-full text-left border-collapse">
+              <thead>
+                <tr className={`${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'} border-b`}>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Employee</th>
+                  {daysOfWeek.map((day) => (
+                    <th key={day} className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">{day.substring(0,3)}</th>
+                  ))}
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${darkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
+                {roster.map((row) => (
+                  <tr key={row.id} className={`${darkMode ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50/50'}`}>
+                    <td className={`whitespace-nowrap px-6 py-4 font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{row.employee}</td>
+                    {row.shifts.map((shift, i) => (
+                      <td key={i} className="px-4 py-4">
+                        <span className={`inline-block rounded-md px-2.5 py-1 text-xs font-bold ${
+                          shift === "Morning" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                          shift === "Evening" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                          "bg-slate-500/10 text-slate-400 border border-slate-500/10"
+                        }`}>
+                          {shift}
+                        </span>
+                      </td>
+                    ))}
+                    <td className="whitespace-nowrap px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleDeleteEmployee(row.id)}
+                        className="text-red-500 hover:text-red-600 font-medium text-xs rounded border border-red-500/20 px-2 py-1 bg-red-500/5 hover:bg-red-500/10 transition cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 2: DAILY ROSTER WITH TIME HOURS */}
+      {activeTab === 'daily' && (
+        <div className="space-y-4">
+          {/* Day Selector Navigation inside the Daily Tab */}
+          <div className="flex flex-wrap gap-2">
+            {daysOfWeek.map((day) => (
+              <button 
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                  selectedDay === day 
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : darkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+
+          {/* Snapshot Area for Daily Roster */}
+          <div ref={printRef} className={`p-6 rounded-xl border shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className="mb-4 flex items-center justify-between border-b pb-4 border-slate-100 dark:border-slate-800">
+              <div>
+                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedDay}'s Work Schedule</h2>
+                <p className="text-xs text-slate-400">Detailed operating hours for on-duty staff</p>
+              </div>
+              <span className="rounded-lg bg-blue-500/10 text-blue-500 text-xs px-3 py-1 font-bold border border-blue-500/10">
+                {selectedDay}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg">
+              <table className="min-w-full text-left border-collapse">
+                <thead>
+                  <tr className={`${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'} border-b`}>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Employee Name</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Scheduled Hours</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Shift Type</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${darkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
+                  {roster.map((row) => {
+                    // Extract shift type and string hours for selectedDay
+                    const dayIdx = daysOfWeek.indexOf(selectedDay);
+                    const shiftType = row.shifts[dayIdx];
+                    const dailyHour = row.hours[selectedDay as keyof typeof row.hours] || "Off";
+
+                    return (
+                      <tr key={row.id} className={`${darkMode ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50/50'}`}>
+                        <td className={`whitespace-nowrap px-6 py-4 font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{row.employee}</td>
+                        <td className="whitespace-nowrap px-6 py-4 font-mono text-sm">
+                          {dailyHour === "Off" ? (
+                            <span className="text-slate-400 dark:text-slate-500 font-sans italic">No scheduled hours</span>
+                          ) : (
+                            <span className={`font-bold ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>{dailyHour}</span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <span className={`inline-block rounded-md px-2.5 py-1 text-xs font-bold ${
+                            shiftType === "Morning" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                            shiftType === "Evening" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                            "bg-slate-500/10 text-slate-400 border border-slate-500/10"
+                          }`}>
+                            {shiftType}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP FORM MODAL (COMPLETELY UPGRADED) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+          <div className={`w-full max-w-lg rounded-xl p-6 shadow-2xl border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Add Staff Member & Shift Times</h2>
+            <form onSubmit={handleAddEmployee}>
+              
+              {/* Name Input */}
+              <div className="mb-4">
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Employee Name</label>
+                <input 
+                  type="text" 
+                  value={newEmployeeName}
+                  onChange={(e) => setNewEmployeeName(e.target.value)}
+                  placeholder="Enter full name"
+                  className={`w-full rounded-lg border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
+                  required
+                />
+              </div>
+
+              {/* Shift Assignments & Time Picker scroll section */}
+              <div className="mb-6 max-h-72 overflow-y-auto border-t border-b py-3 my-2 border-slate-200 dark:border-slate-700 space-y-3">
+                <label className={`block text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Configure Schedule</label>
+                
+                {daysOfWeek.map((day, index) => (
+                  <div key={day} className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-blue-500">{day}</span>
+                      <select 
+                        value={selectedShifts[index]}
+                        onChange={(e) => handleShiftTypeChange(index, e.target.value)}
+                        className={`rounded-md border p-1 text-xs font-medium focus:outline-none ${
+                          darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-800'
+                        }`}
+                      >
+                        <option value="Off">Off</option>
+                        <option value="Morning">Morning</option>
+                        <option value="Evening">Evening</option>
+                      </select>
+                    </div>
+
+                    {/* Show time ranges ONLY if day is not marked "Off" */}
+                    {selectedShifts[index] !== 'Off' && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <input 
+                          type="time" 
+                          value={startTimes[index]}
+                          onChange={(e) => handleTimeChange(index, 'start', e.target.value)}
+                          className={`rounded border p-1 text-xs ${darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300'}`}
+                        />
+                        <span className="text-xs text-slate-400">until</span>
+                        <input 
+                          type="time" 
+                          value={endTimes[index]}
+                          onChange={(e) => handleTimeChange(index, 'end', e.target.value)}
+                          className={`rounded border p-1 text-xs ${darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300'}`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className={`rounded-lg border px-4 py-2 text-xs font-semibold transition ${
+                    darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 shadow-sm transition"
+                >
+                  Save Schedule
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
