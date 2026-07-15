@@ -11,7 +11,10 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'weekly' | 'daily'>('weekly');
   const [selectedDay, setSelectedDay] = useState<string>('Monday');
 
-  // Main Roster State (Includes a daily details array for shift hours)
+  // About Modal State
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+
+  // Main Roster State
   const [roster, setRoster] = useState([
     { 
       id: 1, 
@@ -140,13 +143,23 @@ export default function Dashboard() {
 
         {/* Global Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* About Creator Button */}
+          <button 
+            onClick={() => setIsAboutOpen(true)}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold border transition cursor-pointer ${
+              darkMode ? 'bg-slate-850 border-slate-700 text-blue-400 hover:bg-slate-800' : 'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'
+            }`}
+          >
+            ℹ️ About App
+          </button>
+
           <button 
             onClick={() => setDarkMode(!darkMode)}
             className={`rounded-lg px-4 py-2 text-sm font-semibold border transition cursor-pointer ${
               darkMode ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+            {darkMode ? '☀️ Light' : '🌙 Dark'}
           </button>
 
           <button 
@@ -278,7 +291,6 @@ export default function Dashboard() {
                 </thead>
                 <tbody className={`divide-y ${darkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
                   {roster.map((row) => {
-                    // Extract shift type and string hours for selectedDay
                     const dayIdx = daysOfWeek.indexOf(selectedDay);
                     const shiftType = row.shifts[dayIdx];
                     const dailyHour = row.hours[selectedDay as keyof typeof row.hours] || "Off";
@@ -312,13 +324,12 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* POPUP FORM MODAL (COMPLETELY UPGRADED) */}
+      {/* POPUP FORM MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs">
           <div className={`w-full max-w-lg rounded-xl p-6 shadow-2xl border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
             <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-900'}`}>Add Staff Member & Shift Times</h2>
             <form onSubmit={handleAddEmployee}>
-              
               {/* Name Input */}
               <div className="mb-4">
                 <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Employee Name</label>
@@ -355,7 +366,6 @@ export default function Dashboard() {
                       </select>
                     </div>
 
-                    {/* Show time ranges ONLY if day is not marked "Off" */}
                     {selectedShifts[index] !== 'Off' && (
                       <div className="flex items-center gap-2 pt-1">
                         <input 
@@ -399,6 +409,37 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* NEW: ABOUT DEVELOPER POPUP MODAL */}
+      {isAboutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+          <div className={`w-full max-w-md rounded-xl p-6 shadow-2xl border text-center ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            {/* Minimal Avatar/Icon */}
+            <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-2xl mb-4">
+              💻
+            </div>
+            
+            <h2 className={`text-2xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+              About Workplace Hub
+            </h2>
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-500 mb-4">
+              Developed by Anoodh
+            </p>
+            
+            <p className={`text-sm leading-relaxed mb-6 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              This application was designed and engineered to streamline weekly operations, shift tracking, and daily schedule sharing for office managers. Built on modern web technologies including Next.js, Tailwind CSS, and Prisma.
+            </p>
+
+            <button 
+              onClick={() => setIsAboutOpen(false)}
+              className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 text-sm transition"
+            >
+              Close Info
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
