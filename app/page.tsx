@@ -1,5 +1,6 @@
 // app/page.tsx
 "use client";
+export const dynamic = "force-dynamic";
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas-pro';
 
