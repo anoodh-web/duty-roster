@@ -51,11 +51,11 @@ export default function DashboardClient({ initialRoster }: { initialRoster: any[
       setSelectedShifts(Array(7).fill('Off'));
       setStartTimes(Array(7).fill('09:00'));
       setEndTimes(Array(7).fill('18:00'));
-      router.refresh(); // Permanently syncs the database query with the screen layout
+      router.refresh();
     } else {
-      alert("Failed to save employee to database.");
+      // THIS WILL SHOW US THE EXACT DATABASE ERROR!
+      alert("Database Save Failed:\n" + (res.error || "Unknown Error"));
     }
-  };
 
   const handleShiftTypeChange = (dayIndex: number, val: string) => {
     const updated = [...selectedShifts];
