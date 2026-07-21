@@ -13,14 +13,15 @@ export async function getRoster() {
     const roster = await prisma.employee.findMany({
       orderBy: { createdAt: "desc" },
     });
+
     return roster.map((emp) => ({
       id: emp.id,
       employee: emp.name,
-      shifts: emp.shifts as string[],
-      hours: emp.hours as Record<string, string>,
+      shifts: (emp.shifts as string[]) || Array(7).fill("Off"),
+      hours: (emp.hours as Record<string, string>) || {},
     }));
   } catch (error) {
-    console.error("❌ Error fetching roster from database:", error);
+    console.error("❌ Database Fetch Error:", error);
     return [];
   }
 }
@@ -42,7 +43,7 @@ export async function addEmployeeToDb(
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.error("❌ Error adding employee to database:", error);
+    console.error("❌ Add Error:", error);
     return { success: false, error: String(error) };
   }
 }
@@ -56,7 +57,7 @@ export async function deleteEmployeeFromDb(id: string) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.error("❌ Error deleting employee from database:", error);
+    console.error("❌ Delete Error:", error);
     return { success: false, error: String(error) };
   }
 }
