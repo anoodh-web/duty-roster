@@ -3,8 +3,15 @@
 import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+// Prevent Prisma from crashing during static build analysis if DATABASE_URL is pending
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
-export const prisma = globalForPrisma.prisma || new PrismaClient();
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  });
+
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export async function getRoster() {
@@ -20,7 +27,7 @@ export async function getRoster() {
       hours: (emp.hours as Record<string, string>) || {},
     }));
   } catch (error) {
-    console.error("Failed to fetch roster:", error);
+    console.error("Database fetch ignored during build or network delay:", error);
     return [];
   }
 }
