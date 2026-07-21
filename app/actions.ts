@@ -3,7 +3,6 @@
 import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-// Global single instance to prevent serverless connection exhaustion
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
@@ -20,14 +19,15 @@ export async function getRoster() {
       orderBy: { createdAt: "desc" },
     });
 
+    // Explicitly map object values to pure JSON primitives
     return roster.map((emp) => ({
-      id: emp.id,
-      employee: emp.name,
-      shifts: (emp.shifts as string[]) || Array(7).fill("Off"),
-      hours: (emp.hours as Record<string, string>) || {},
+      id: String(emp.id),
+      employee: String(emp.name),
+      shifts: Array.isArray(emp.shifts) ? emp.shifts : Array(7).fill("Off"),
+      hours: typeof emp.hours === "object" && emp.hours !== null ? emp.hours : {},
     }));
-  } catch (error) {
-    console.error("Failed to fetch roster:", error);
+  } catch (error: any) {
+    console.error("Failed to fetch roster:", error?.message || error);
     return [];
   }
 }
@@ -42,10 +42,18 @@ export async function addEmployeeToDb(
       data: { name, shifts, hours },
     });
     revalidatePath("/");
-    return { success: true, data: created };
+    return {
+      success: true,
+      data: {
+        id: String(created.id),
+        employee: String(created.name),
+        shifts: Array.isArray(created.shifts) ? created.shifts : Array(7).fill("Off"),
+        hours: typeof created.hours === "object" && created.hours !== null ? created.hours : {},
+      },
+    };
   } catch (error: any) {
     console.error("Error creating employee:", error?.message || error);
-    return { success: false, error: error?.message };
+    return { success: false, error: error?.message || "Failed to create employee" };
   }
 }
 
@@ -56,6 +64,6 @@ export async function deleteEmployeeFromDb(id: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting employee:", error?.message || error);
-    return { success: false, error: error?.message };
+    return { success: false, error: error?.message || "Failed to delete employee" };
   }
 }
