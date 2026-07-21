@@ -1,19 +1,18 @@
 import DashboardClient from "./DashboardClient";
 import { getRoster } from "./actions";
 
-// Tell Next.js 15 to NEVER evaluate or pre-render this page at build time
+// Force Next.js to evaluate this route dynamically at runtime, never at build time
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 export default async function Page() {
-  let initialData = [];
+  let initialRoster = [];
 
   try {
-    initialData = await getRoster();
+    initialRoster = await getRoster();
   } catch (error) {
-    console.error("Failed to load initial roster on server render:", error);
+    console.error("Build-time roster fallback:", error);
   }
 
-  return <DashboardClient initialRoster={initialData} />;
+  return <DashboardClient initialRoster={initialRoster} />;
 }
