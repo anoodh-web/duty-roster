@@ -3,6 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+// Global singleton to reuse client in serverless
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
@@ -19,7 +20,6 @@ export async function getRoster() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Explicitly map object values to pure JSON primitives
     return roster.map((emp) => ({
       id: String(emp.id),
       employee: String(emp.name),
@@ -27,7 +27,7 @@ export async function getRoster() {
       hours: typeof emp.hours === "object" && emp.hours !== null ? emp.hours : {},
     }));
   } catch (error: any) {
-    console.error("Failed to fetch roster:", error?.message || error);
+    console.error("Failed to fetch roster from Supabase:", error?.message || error);
     return [];
   }
 }
@@ -39,8 +39,13 @@ export async function addEmployeeToDb(
 ) {
   try {
     const created = await prisma.employee.create({
-      data: { name, shifts, hours },
+      data: { 
+        name: String(name), 
+        shifts: shifts || Array(7).fill("Off"), 
+        hours: hours || {} 
+      },
     });
+
     revalidatePath("/");
     return {
       success: true,
@@ -52,18 +57,21 @@ export async function addEmployeeToDb(
       },
     };
   } catch (error: any) {
-    console.error("Error creating employee:", error?.message || error);
+    console.error("Error creating employee in Supabase:", error?.message || error);
     return { success: false, error: error?.message || "Failed to create employee" };
   }
 }
 
 export async function deleteEmployeeFromDb(id: string) {
   try {
-    await prisma.employee.delete({ where: { id } });
+    await prisma.employee.delete({ 
+      where: { id: String(id) } 
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
-    console.error("Error deleting employee:", error?.message || error);
+    console.error("Error deleting employee from Supabase:", error?.message || error);
     return { success: false, error: error?.message || "Failed to delete employee" };
   }
 }
