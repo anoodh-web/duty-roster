@@ -12,6 +12,7 @@ export async function getRoster() {
     const roster = await prisma.employee.findMany({
       orderBy: { createdAt: "desc" },
     });
+
     return roster.map((emp) => ({
       id: emp.id,
       employee: emp.name,
@@ -19,7 +20,7 @@ export async function getRoster() {
       hours: (emp.hours as Record<string, string>) || {},
     }));
   } catch (error) {
-    console.error("Database Fetch Error:", error);
+    console.error("Failed to fetch roster:", error);
     return [];
   }
 }
@@ -30,14 +31,14 @@ export async function addEmployeeToDb(
   hours: Record<string, string>
 ) {
   try {
-    await prisma.employee.create({
+    const created = await prisma.employee.create({
       data: { name, shifts, hours },
     });
     revalidatePath("/");
-    return { success: true };
+    return { success: true, data: created };
   } catch (error) {
-    console.error("Database Save Error:", error);
-    return { success: false, error: String(error) };
+    console.error("Error creating employee:", error);
+    return { success: false };
   }
 }
 
@@ -47,7 +48,7 @@ export async function deleteEmployeeFromDb(id: string) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    console.error("Database Delete Error:", error);
-    return { success: false, error: String(error) };
+    console.error("Error deleting employee:", error);
+    return { success: false };
   }
 }
