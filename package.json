@@ -1,7 +1,30 @@
-"scripts": {
+{
+  "name": "duty-roster",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate"
   },
+  "dependencies": {
+    "@prisma/client": "^7.8.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "autoprefixer": "^10.4.19",
+    "html2canvas-pro": "^1.5.10",
+    "next": "15.1.9",
+    "postcss": "^8.4.38",
+    "react": "19.0.1",
+    "react-dom": "19.0.1",
+    "tailwindcss": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prisma": "^7.8.0",
+    "typescript": "^5.3.3"
+  }
+}
