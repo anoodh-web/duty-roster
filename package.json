@@ -10,7 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^7.9.0",
     "@tailwindcss/postcss": "^4.0.0",
     "autoprefixer": "^10.4.19",
     "html2canvas-pro": "^1.5.10",
@@ -24,7 +24,7 @@
     "@types/node": "^20.11.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "prisma": "^7.8.0",
+    "prisma": "^7.9.0",
     "typescript": "^5.3.3"
   }
 }
