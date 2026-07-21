@@ -1,18 +1,34 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import DashboardClient from "./DashboardClient";
 import { getRoster } from "./actions";
 
-// Force Next.js to evaluate this route dynamically at runtime, never at build time
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export default function Page() {
+  const [roster, setRoster] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function Page() {
-  let initialRoster = [];
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getRoster();
+        setRoster(data);
+      } catch (err) {
+        console.error("Failed to load roster:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  try {
-    initialRoster = await getRoster();
-  } catch (error) {
-    console.error("Build-time roster fallback:", error);
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Loading duty roster...</p>
+      </div>
+    );
   }
 
-  return <DashboardClient initialRoster={initialRoster} />;
+  return <DashboardClient initialRoster={roster} />;
 }
