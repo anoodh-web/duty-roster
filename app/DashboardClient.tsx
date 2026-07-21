@@ -29,8 +29,7 @@ export default function DashboardClient({ initialRoster }: { initialRoster: any[
       alert("Error deleting employee from database.");
     }
   };
-
-  const handleAddEmployee = async (e: React.FormEvent) => {
+const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmployeeName.trim()) return;
 
@@ -43,19 +42,31 @@ export default function DashboardClient({ initialRoster }: { initialRoster: any[
       }
     });
 
-    setIsModalOpen(false);
-    const res = await addEmployeeToDb(newEmployeeName, selectedShifts, dailyHoursObj);
-    
-    if (res.success) {
-      setNewEmployeeName('');
-      setSelectedShifts(Array(7).fill('Off'));
-      setStartTimes(Array(7).fill('09:00'));
-      setEndTimes(Array(7).fill('18:00'));
-      router.refresh();
-    } else {
-      // THIS WILL SHOW US THE EXACT DATABASE ERROR!
-      alert("Database Save Failed:\n" + (res.error || "Unknown Error"));
+    console.log("1. Sending request to server action...");
+
+    try {
+      // Direct call to Server Action
+      const res = await addEmployeeToDb(newEmployeeName, selectedShifts, dailyHoursObj);
+      console.log("2. Server response received:", res);
+
+      if (res && res.success) {
+        alert("SUCCESS: Saved to Supabase database!");
+        setIsModalOpen(false);
+        setNewEmployeeName('');
+        setSelectedShifts(Array(7).fill('Off'));
+        setStartTimes(Array(7).fill('09:00'));
+        setEndTimes(Array(7).fill('18:00'));
+        
+        // Force hard refresh of page data from server
+        window.location.reload();
+      } else {
+        alert(`❌ FAILED TO SAVE TO DATABASE:\n${res?.error || "Unknown server error"}`);
+      }
+    } catch (err) {
+      console.error("3. Action execution crashed:", err);
+      alert(`💥 ACTION CRASHED:\n${String(err)}`);
     }
+  };
 
   const handleShiftTypeChange = (dayIndex: number, val: string) => {
     const updated = [...selectedShifts];
