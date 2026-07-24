@@ -1,7 +1,6 @@
 "use server";
 
 import { PrismaClient } from "@prisma/client";
-import { revalidatePath } from "next/cache";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
@@ -45,7 +44,6 @@ export async function addEmployeeToDb(
       },
     });
 
-    revalidatePath("/");
     return {
       success: true,
       data: {
@@ -57,7 +55,6 @@ export async function addEmployeeToDb(
     };
   } catch (error: any) {
     console.error("Error creating employee in Supabase:", error?.message || error);
-    // Return explicit error to show in alert
     return { success: false, error: error?.message || "Failed to save to database" };
   }
 }
@@ -68,10 +65,9 @@ export async function deleteEmployeeFromDb(id: string) {
       where: { id: String(id) },
     });
 
-    revalidatePath("/");
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting employee:", error?.message || error);
-    return { success: false, error: error?.message || "Failed to delete" };
+    return { success: false, error: error?.message || "Failed to delete employee" };
   }
 }
