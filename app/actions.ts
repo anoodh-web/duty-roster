@@ -3,8 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-// Global singleton to reuse client in serverless
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ||
@@ -27,7 +26,7 @@ export async function getRoster() {
       hours: typeof emp.hours === "object" && emp.hours !== null ? emp.hours : {},
     }));
   } catch (error: any) {
-    console.error("Failed to fetch roster from Supabase:", error?.message || error);
+    console.error("Failed to fetch roster:", error?.message || error);
     return [];
   }
 }
@@ -39,10 +38,10 @@ export async function addEmployeeToDb(
 ) {
   try {
     const created = await prisma.employee.create({
-      data: { 
-        name: String(name), 
-        shifts: shifts || Array(7).fill("Off"), 
-        hours: hours || {} 
+      data: {
+        name: String(name),
+        shifts: shifts || Array(7).fill("Off"),
+        hours: hours || {},
       },
     });
 
@@ -58,20 +57,21 @@ export async function addEmployeeToDb(
     };
   } catch (error: any) {
     console.error("Error creating employee in Supabase:", error?.message || error);
-    return { success: false, error: error?.message || "Failed to create employee" };
+    // Return explicit error to show in alert
+    return { success: false, error: error?.message || "Failed to save to database" };
   }
 }
 
 export async function deleteEmployeeFromDb(id: string) {
   try {
-    await prisma.employee.delete({ 
-      where: { id: String(id) } 
+    await prisma.employee.delete({
+      where: { id: String(id) },
     });
 
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
-    console.error("Error deleting employee from Supabase:", error?.message || error);
-    return { success: false, error: error?.message || "Failed to delete employee" };
+    console.error("Error deleting employee:", error?.message || error);
+    return { success: false, error: error?.message || "Failed to delete" };
   }
 }
